@@ -1,0 +1,33 @@
+% Define the lengths of the links
+L_1 = 70;  % Length of the first link
+L_2 = 60;  % Length of the second link
+L_3 = 80;  % Length of the third link
+
+% Create the links using the DH parameters
+L(1) = Link([0 0 L_1 0]);     % Link 1 (revolute joint)
+L(2) = Link([0 0 L_2 0]);     % Link 2 (revolute joint)
+L(3) = Link([0 0 L_3 0]);     % Link 3 (revolute joint)
+
+% Create the robot model
+Robot = SerialLink(L);
+Robot.name = 'ROBOT_Ahmed_Diaa';
+
+% Define the joint angles (in radians)
+Th_1 = pi/6;  % Example angle for joint 1
+Th_2 = pi/4;  % Example angle for joint 2
+Th_3 = pi/3;  % Example angle for joint 3
+
+% Plot the robot with the specified joint angles
+Robot.plot([Th_1 Th_2 Th_3]);
+
+% Forward kinematics to get the transformation matrix
+T = Robot.fkine([Th_1 Th_2 Th_3]);
+
+% Display the transformation matrix
+disp('Transformation matrix T:');
+disp(T);
+
+% Compute and display the inverse of the transformation matrix
+T_inv = inv(T);
+disp('Inverse transformation matrix T_inv:');
+disp(T_inv);
