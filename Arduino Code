@@ -1,0 +1,178 @@
+#include <Servo.h>
+#include <SoftwareSerial.h>
+
+// Create a SoftwareSerial object with RX on pin 3 and TX on pin 2
+SoftwareSerial BTSerial(3, 2); // RX, TX
+
+// Define your servos
+Servo baseServo;        // Base (360-degree continuous rotation)
+Servo shoulderServo;    // Shoulder (360-degree continuous rotation)
+Servo elbowServo;       // Elbow (9g servo, 0-180 degrees)
+Servo wristPitch;       // Wrist Pitch (9g servo, 0-180 degrees)
+Servo wristRoll;        // Wrist Roll (9g servo, 0-180 degrees)
+Servo gripper;          // Gripper (9g servo, 0-180 degrees)
+
+// Servo positions for the 9g servos
+int wristPitchPos = 90;  // Start in neutral position (middle of range)
+int wristRollPos = 90;   // Start in neutral position (middle of range)
+int gripperPos = 90;     // Gripper in neutral position (open)
+
+// Elbow position for 9g servo (0-180 degrees)
+int elbowPos = 90;  // Initial position for the elbow (neutral position)
+
+// Servo speeds for continuous rotation servos
+int baseSpeed = 0;      // Base rotation speed (neutral)
+int shoulderSpeed = 0;  // Shoulder rotation speed (neutral)
+
+void setup() {
+  // Start Bluetooth Serial communication
+  BTSerial.begin(9600);  // HC-05 Bluetooth module at 9600 baud rate
+  
+  // Attach the servos to their respective pins
+  baseServo.attach(5);       // Base (360-degree continuous rotation)
+  shoulderServo.attach(6);   // Shoulder (360-degree continuous rotation)
+  elbowServo.attach(7);      // Elbow (9g servo, 0-180 degrees)
+  wristPitch.attach(8);      // Wrist Pitch (9g servo, 0-180 degrees)
+  wristRoll.attach(9);       // Wrist Roll (9g servo, 0-180 degrees)
+  gripper.attach(10);        // Gripper (9g servo, 0-180 degrees)
+  
+  Serial.begin(9600); // Begin Serial Monitor for debugging
+  delay(1000);  // Wait for initial servo setup
+}
+
+void loop() {
+  // Check if data is available from Bluetooth
+  if (BTSerial.available()) {
+    char command = BTSerial.read(); // Read the command sent from the Bluetooth terminal
+
+    // Control Base (360-degree continuous)
+    if (command == 'R') {  // Right Button
+      moveBaseRight();  // Rotate base right
+    }
+    else if (command == 'L') {  // Left Button
+      moveBaseLeft();   // Rotate base left
+    }
+
+    // Control Shoulder (360-degree continuous)
+    else if (command == 'S') {  // Square Button
+      moveShoulderUp();  // Move shoulder up by 10 degrees
+    }
+    else if (command == 'T') {  // Rectangle Button
+      moveShoulderDown();  // Move shoulder down by 10 degrees
+    }
+
+    // Control Elbow (9g servo, 0-180 degrees)
+    else if (command == 'U') {  // Up Button
+      moveElbowUp();  // Move elbow up by 10 degrees
+    }
+    else if (command == 'D') {  // Down Button
+      moveElbowDown();  // Move elbow down by 10 degrees
+    }
+
+    // Control Wrist Pitch (9g servo, 0-180 degrees)
+    else if (command == 'C') {  // Circle Button
+      rotateWristPitch();  // Increase wrist pitch by 10 degrees
+    }
+
+    // Control Wrist Roll (9g servo, 0-180 degrees)
+    else if (command == 'X') {  // Triangle Button
+      rotateWristRoll();  // Increase wrist roll by 10 degrees
+    }
+
+    // Control Gripper (9g servo, 0-180 degrees)
+    else if (command == 'Z') {  // X Button
+      closeGripper();  // Close gripper (pick up)
+    }
+    else if (command == 'P') {  // O Button
+      openGripper();  // Open gripper (release)
+    }
+
+    delay(200); // Debounce the input for smoother control
+  }
+}
+
+// Base Movement (360-degree continuous)
+void moveBaseRight() {
+  baseSpeed += 10;  // Increase the speed by 10 (right movement)
+  if (baseSpeed > 180) baseSpeed = 180;  // Limit base speed to 180 (max speed)
+  baseServo.write(baseSpeed);  // Rotate base to the right
+  Serial.print("Base moved right to speed: ");
+  Serial.println(baseSpeed);
+}
+
+void moveBaseLeft() {
+  baseSpeed -= 10;  // Decrease the speed by 10 (left movement)
+  if (baseSpeed < -180) baseSpeed = -180;  // Limit base speed to -180 (max left speed)
+  baseServo.write(baseSpeed);  // Rotate base to the left
+  Serial.print("Base moved left to speed: ");
+  Serial.println(baseSpeed);
+}
+
+// Shoulder Movement (360-degree continuous)
+void moveShoulderUp() {
+  shoulderSpeed += 10;  // Increase shoulder speed by 10 (up)
+  if (shoulderSpeed > 180) shoulderSpeed = 180;  // Limit shoulder speed to 180 (max speed)
+  shoulderServo.write(shoulderSpeed);  // Rotate shoulder up
+  Serial.print("Shoulder moved up to speed: ");
+  Serial.println(shoulderSpeed);
+}
+
+void moveShoulderDown() {
+  shoulderSpeed -= 10;  // Decrease shoulder speed by 10 (down)
+  if (shoulderSpeed < -180) shoulderSpeed = -180;  // Limit shoulder speed to -180 (max down speed)
+  shoulderServo.write(shoulderSpeed);  // Rotate shoulder down
+  Serial.print("Shoulder moved down to speed: ");
+  Serial.println(shoulderSpeed);
+}
+
+// Elbow Movement (9g servo, 0-180 degrees)
+void moveElbowUp() {
+  elbowPos += 10;  // Increase the elbow position by 10 degrees
+  if (elbowPos > 180) elbowPos = 180;  // Limit elbow position to 180 degrees (max)
+  elbowServo.write(elbowPos);  // Set elbow servo to the new position
+  Serial.print("Elbow moved to: ");
+  Serial.println(elbowPos);
+}
+
+void moveElbowDown() {
+  elbowPos -= 10;  // Decrease the elbow position by 10 degrees
+  if (elbowPos < 0) elbowPos = 0;  // Limit elbow position to 0 degrees (min)
+  elbowServo.write(elbowPos);  // Set elbow servo to the new position
+  Serial.print("Elbow moved to: ");
+  Serial.println(elbowPos);
+}
+
+// Wrist Pitch (9g servo, 0-180 degrees)
+void rotateWristPitch() {
+  wristPitchPos += 10;  // Increase wrist pitch position by 10 degrees
+  if (wristPitchPos > 180) wristPitchPos = 0;  // Loop back to 0 if it exceeds 180
+  wristPitch.write(wristPitchPos);  // Set wrist pitch position
+  Serial.print("Wrist pitch rotated to: ");
+  Serial.println(wristPitchPos);
+}
+
+// Wrist Roll (9g servo, 0-180 degrees)
+void rotateWristRoll() {
+  wristRollPos += 10;  // Increase wrist roll position by 10 degrees
+  if (wristRollPos > 180) wristRollPos = 0;  // Loop back to 0 if it exceeds 180
+  wristRoll.write(wristRollPos);  // Set wrist roll position
+  Serial.print("Wrist roll rotated to: ");
+  Serial.println(wristRollPos);
+}
+
+// Gripper (9g servo, 0-180 degrees)
+void closeGripper() {
+  gripperPos -= 10;  // Decrease gripper position by 10 degrees (close)
+  if (gripperPos < 0) gripperPos = 0;  // Limit gripper position to 0 (closed)
+  gripper.write(gripperPos);  // Set gripper position to closed
+  Serial.print("Gripper moved to: ");
+  Serial.println(gripperPos);
+}
+
+void openGripper() {
+  gripperPos += 10;  // Increase gripper position by 10 degrees (open)
+  if (gripperPos > 180) gripperPos = 180;  // Limit gripper position to 180 (open)
+  gripper.write(gripperPos);  // Set gripper position to open
+  Serial.print("Gripper moved to: ");
+  Serial.println(gripperPos);
+}
