@@ -1,0 +1,49 @@
+% Define angles in radians
+pi = 180;
+theta_x = pi/2; % 60 degrees about x-axis
+theta_y = 0; % 30 degrees about y-axis
+theta_z = pi/4; % 90 degrees about z-axis
+
+% Rotation about x-axis
+Rx = [1, 0,              0;
+      0, cos(theta_x),  -sin(theta_x);
+      0, sin(theta_x),   cos(theta_x)];
+
+% Rotation about y-axis
+Ry = [cos(theta_y),  0, sin(theta_y);
+      0,             1, 0;
+      -sin(theta_y), 0, cos(theta_y)];
+
+% Rotation about z-axis
+Rz = [cos(theta_z), -sin(theta_z), 0;
+      sin(theta_z),  cos(theta_z), 0;
+      0,             0,            1];
+
+% Combined rotation matrix (Rz * Ry * Rx)
+R = Rx * Ry * Rz;
+
+% Compute axis-angle representation
+theta = acos((trace(R) - 1) / 2); % Rotation angle in radians
+theta_deg = theta * 180 / pi; % Convert to degrees
+
+% Calculate rotation axis components
+if sin(theta) ~= 0
+    vx = (R(3,2) - R(2,3)) / (2 * sin(theta));
+    vy = (R(1,3) - R(3,1)) / (2 * sin(theta));
+    vz = (R(2,1) - R(1,2)) / (2 * sin(theta));
+else
+    % Special case: theta = 0 or pi (rotation axis undefined or ambiguous)
+    vx = 0; vy = 0; vz = 0;
+end
+
+% Normalize the axis vector
+v = [vx, vy, vz];
+v = v / norm(v);
+
+% Display results
+disp('Rotation Matrix R:');
+disp(R);
+disp('Rotation Angle (theta in degrees):');
+disp(theta_deg);
+disp('Rotation Axis (normalized v):');
+disp(v);
