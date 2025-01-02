@@ -1,0 +1,32 @@
+clc;
+close all;
+
+% Read the STL file
+fv = stlread('Robotic Arm 3D Model.STL');  % Replace with your STL file path
+
+% Check the fields of the structure (for debugging)
+disp(fv);
+
+% Check if the structure contains the necessary fields (faces and vertices)
+if isfield(fv, 'faces') && isfield(fv, 'vertices')
+    % Use patch function with explicit Faces and Vertices fields
+    patch('Faces', fv.faces, 'Vertices', fv.vertices, ... 
+          'FaceColor', [0.8 0.8 1.0], ...   % Light blue face color
+          'EdgeColor', 'none', ...          % No edges on the surface
+          'FaceLighting', 'gouraud', ...    % Gouraud lighting for smooth shading
+          'AmbientStrength', 0.15);         % Dim ambient light strength
+
+    % Add a camera light
+    camlight('headlight');
+    material('dull');  % Make the material dull to reduce specular highlights
+
+    % Fix the axes scaling
+    axis('image');
+    view([-135 35]);    % Set a nice 3D view angle
+    grid on;
+
+    % Add a title for clarity
+    title('Ahmed Diaa Robot 3D');
+else
+    error('The STL file does not contain the necessary fields (faces and vertices).');
+end
