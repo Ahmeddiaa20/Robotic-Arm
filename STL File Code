@@ -1,0 +1,98 @@
+function fv = stlread(filename)
+    % Check if the file is binary or ASCII
+    fid = fopen(filename, 'r');
+    if fid == -1
+        error('File not found or permission denied');
+    end
+    
+    header = fread(fid, 5, 'char');
+    
+    % If the header begins with 'solid', it's an ASCII file
+    if header(1) == 83 && header(2) == 111 && header(3) == 108 && header(4) == 105 && header(5) == 100
+        fclose(fid);
+        fv = stlread_ascii(filename);  % Call ASCII reader
+    else
+        fclose(fid);
+        fv = stlread_binary(filename);  % Call binary reader
+    end
+end
+
+function fv = stlread_ascii(filename)
+    % Read an ASCII STL file
+    fid = fopen(filename, 'r');
+    if fid == -1
+        error('File not found or permission denied');
+    end
+    
+    vertices = [];
+    faces = [];
+    
+    tline = fgetl(fid);
+    while ischar(tline)
+        tline = strtrim(tline);
+        
+        % Look for the 'facet normal' and 'outer loop' lines
+        if startsWith(tline, 'facet normal')
+            fgetl(fid);  % Skip the normal line
+            v1 = sscanf(fgetl(fid), 'vertex %f %f %f');
+            v2 = sscanf(fgetl(fid), 'vertex %f %f %f');
+            v3 = sscanf(fgetl(fid), 'vertex %f %f %f');
+            
+            vertices = [vertices; v1'; v2'; v3'];
+            faces = [faces; size(vertices, 1)-2, size(vertices, 1)-1, size(vertices, 1)];
+            
+            % Skip the 'endloop' and 'endfacet' lines
+            fgetl(fid);
+            fgetl(fid);
+        end
+        
+        tline = fgetl(fid);
+    end
+    
+    fclose(fid);
+    
+    % Store faces and vertices in a structure
+    fv.vertices = vertices;
+    fv.faces = faces;
+end
+
+function fv = stlread_binary(filename)
+    % Read a binary STL file
+    fid = fopen(filename, 'r');
+    if fid == -1
+        error('File not found or permission denied');
+    end
+    
+    % Skip the header (80 bytes)
+    fseek(fid, 80, 'bof');
+    
+    % Read the number of triangles
+    numTriangles = fread(fid, 1, 'uint32');
+    
+    % Initialize arrays for vertices and faces
+    vertices = zeros(numTriangles * 3, 3);
+    faces = zeros(numTriangles, 3);
+    
+    % Loop through each triangle
+    for i = 1:numTriangles
+        fread(fid, 3, 'float32');  % Skip the normal vector
+        v1 = fread(fid, 3, 'float32');
+        v2 = fread(fid, 3, 'float32');
+        v3 = fread(fid, 3, 'float32');
+        
+        vertices((i-1)*3 + 1, :) = v1';
+        vertices((i-1)*3 + 2, :) = v2';
+        vertices((i-1)*3 + 3, :) = v3';
+        
+        faces(i, :) = [(i-1)*3 + 1, (i-1)*3 + 2, (i-1)*3 + 3];
+        
+        % Skip the attribute byte count (2 bytes)
+        fread(fid, 1, 'uint16');
+    end
+    
+    fclose(fid);
+    
+    % Store faces and vertices in a structure
+    fv.vertices = vertices;
+    fv.faces = faces;
+end
